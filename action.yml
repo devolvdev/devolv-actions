@@ -8,7 +8,7 @@ inputs:
   policy-name:
     description: IAM policy name (required for drift)
     required: false
-  file:
+  path:
     description: Path to the local policy file or directory
     required: true
 
@@ -23,11 +23,15 @@ runs:
     - name: Run Devolv tool
       run: |
         if [ "${{ inputs.tool }}" = "drift" ]; then
-          devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.file }}"
+          if [ ! -f "${{ inputs.path }}" ]; then
+            echo "❌ Error: drift requires a file path. '${{ inputs.path }}' is not a file."
+            exit 1
+          fi
+          devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}"
         elif [ "${{ inputs.tool }}" = "validate" ]; then
-          devolv validate "${{ inputs.file }}"
+          devolv validate "${{ inputs.path }}"
         else
-          echo "Unknown tool: ${{ inputs.tool }}"
+          echo "❌ Unknown tool: ${{ inputs.tool }}"
           exit 1
         fi
       shell: bash
