@@ -1,32 +1,42 @@
 
-# Devolv GitHub Action
+# Devolv GitHub Action  
 
-✅ Run Devolv DevOps Toolkit tools (drift detection, IAM validation) easily inside GitHub workflows.
+✅ Run **Devolv DevOps Toolkit** tools (drift detection, IAM validation) directly in GitHub workflows.  
 
-## 📌 Inputs
+## 📌 Inputs  
 
-| Input        | Description                           | Required |
-|--------------|---------------------------------------|----------|
-| `tool`       | Which tool to run (drift, validate)   | ✅ yes |
-| `policy-name`| IAM policy name (needed for drift)    | ❌ no |
-| `file`       | Path to local policy file             | ✅ yes |
+| Input          | Description                             | Required |
+|----------------|-----------------------------------------|----------|
+| `tool`         | Which tool to run (`drift` or `validate`)| ✅ yes |
+| `policy-name`  | IAM policy name (required for drift)     | ❌ no (✅ yes if `drift`) |
+| `path`         | Path to local policy file or folder      | ✅ yes |
 
-## 🚀 Example usage
+## 🚀 Example usage  
+
+### 🛡️ Drift detection  
 
 ```yaml
-- uses: devolvdev/devolv-action@v1
-  with:
-    tool: drift
-    policy-name: my-policy
-    file: ./policy.json
+- name: Run Devolv Drift Detection  
+  uses: devolvdev/devolv-actions@v1  
+  with:  
+    tool: drift  
+    policy-name: DevolvTestPolicyHuge  
+    path: ./test-devolv-policy.json  
+```  
 
-- uses: devolvdev/devolv-action@v1
-  with:
-    tool: validate
-    file: ./policy.json
-```
+### 🔍 IAM validation  
 
-## 🔑 Notes
+```yaml
+- name: Run Devolv IAM Validation  
+  uses: devolvdev/devolv-actions@v1  
+  with:  
+    tool: validate  
+    path: ./sample_policies  
+```  
 
-- The action installs Devolv at runtime using pip.
-- Supports both `validate` and `drift` tools.
+## ⚡ Notes  
+
+- ✅ **Supports both drift detection and validator** (use `tool: drift` or `tool: validate`)  
+- ✅ Output is colorized and console-friendly (when run locally)  
+- ✅ Works great in CI/CD pipelines  
+- The action installs Devolv at runtime with pip (silent install)  
