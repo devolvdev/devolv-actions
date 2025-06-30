@@ -11,6 +11,10 @@ inputs:
   path:
     description: Path to the local policy file or directory
     required: true
+  fail-on-high-risk:
+    description: Whether to fail the job if high-risk findings are detected (for validate)
+    required: false
+    default: "true"
 
 runs:
   using: "composite"
@@ -35,9 +39,23 @@ runs:
             exit 1
           fi
           devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}"
-        
+
         elif [ "${{ inputs.tool }}" = "validate" ]; then
-          devolv validate "${{ inputs.path }}"
+          echo "::group::Running validation on '${{ inputs.path }}'"
+          devolv validate "${{ inputs.path }}" --json > findings.json || true
+
+          if grep -q '"level": "high"' findings.json; then
+            echo "::error::❌ High-risk findings detected — see findings.json"
+            if [ "${{ inputs.fail-on-high-risk }}" = "true" ]; then
+              cat findings.json
+              exit 1
+            else
+              cat findings.json
+            fi
+          else
+            echo "✅ No high-risk findings"
+          fi
+          echo "::endgroup::"
 
         else
           echo "::error::❌ Unknown tool: ${{ inputs.tool }}"
@@ -46,3 +64,11 @@ runs:
 
         echo "::endgroup::"
       shell: bash
+
+    - name: Upload findings (if any)
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: devolv-findings
+        path: findings.json
+        if-no-files-found: ignore
