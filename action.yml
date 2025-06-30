@@ -21,7 +21,7 @@ runs:
   steps:
     - name: Install Devolv
       run: |
-        pip install .[dev] --quiet --disable-pip-version-check
+        pip install .[dev] --quiet --disable-pip-version-check > /dev/null 2>&1
       shell: bash
 
     - name: Run Devolv tool
@@ -41,15 +41,14 @@ runs:
           devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}"
 
         elif [ "${{ inputs.tool }}" = "validate" ]; then
-          devolv validate "${{ inputs.path }}" --json > findings.json || true
+          devolv validate "${{ inputs.path }}" || true
 
-          if grep -q '"level": "high"' findings.json; then
-            echo "::error::❌ High-risk findings detected — see job summary"
-            if [ "${{ inputs.fail-on-high-risk }}" = "true" ]; then
+          # Capture exit code ourselves if needed (fail-on-high-risk)
+          if [ "${{ inputs.fail-on-high-risk }}" = "true" ]; then
+            if devolv validate "${{ inputs.path }}" --json | grep -q '"level": "high"'; then
+              echo "::error::❌ High-risk findings detected"
               exit 1
             fi
-          else
-            echo "✅ No high-risk findings"
           fi
 
         else
