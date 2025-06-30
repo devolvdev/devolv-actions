@@ -36,14 +36,14 @@ runs:
             echo "::error::❌ Drift requires a file path. '${{ inputs.path }}' is not a file."
             exit 1
           fi
-          # Let drift output print naturally in GitHub Actions
           devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}"
 
         elif [ "${{ inputs.tool }}" = "validate" ]; then
           echo "::group::Running Devolv validate"
-          devolv validate "${{ inputs.path }}" || true
+          devolv validate "${{ inputs.path }}"
 
           if [ "${{ inputs.fail-on-high-risk }}" = "true" ]; then
+            # Check for high-risk findings and fail if present
             if devolv validate "${{ inputs.path }}" --json | grep -q '"level": "high"'; then
               echo "::error::❌ High-risk findings detected"
               exit 1
