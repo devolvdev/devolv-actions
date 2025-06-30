@@ -26,8 +26,6 @@ runs:
 
     - name: Run Devolv tool
       run: |
-        echo "::group::Running Devolv ${{ inputs.tool }}"
-
         if [ -z "${{ inputs.path }}" ]; then
           echo "::error::❌ Path input is required but was not provided."
           exit 1
@@ -38,9 +36,11 @@ runs:
             echo "::error::❌ Drift requires a file path. '${{ inputs.path }}' is not a file."
             exit 1
           fi
+          # Let drift output print naturally in GitHub Actions
           devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}"
 
         elif [ "${{ inputs.tool }}" = "validate" ]; then
+          echo "::group::Running Devolv validate"
           devolv validate "${{ inputs.path }}" || true
 
           if [ "${{ inputs.fail-on-high-risk }}" = "true" ]; then
@@ -49,11 +49,10 @@ runs:
               exit 1
             fi
           fi
+          echo "::endgroup::"
 
         else
           echo "::error::❌ Unknown tool: ${{ inputs.tool }}"
           exit 1
         fi
-
-        echo "::endgroup::"
       shell: bash
