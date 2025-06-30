@@ -44,12 +44,9 @@ runs:
           devolv validate "${{ inputs.path }}" --json > findings.json || true
 
           if grep -q '"level": "high"' findings.json; then
-            echo "::error::❌ High-risk findings detected — see findings.json"
+            echo "::error::❌ High-risk findings detected — see job summary"
             if [ "${{ inputs.fail-on-high-risk }}" = "true" ]; then
-              cat findings.json
               exit 1
-            else
-              cat findings.json
             fi
           else
             echo "✅ No high-risk findings"
@@ -62,11 +59,3 @@ runs:
 
         echo "::endgroup::"
       shell: bash
-
-    - name: Upload findings (if any)
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: devolv-findings
-        path: findings.json
-        if-no-files-found: ignore
