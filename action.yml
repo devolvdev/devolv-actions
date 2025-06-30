@@ -17,21 +17,32 @@ runs:
   steps:
     - name: Install Devolv
       run: |
-        pip install .[dev]
+        pip install .[dev] --quiet --disable-pip-version-check
       shell: bash
 
     - name: Run Devolv tool
       run: |
+        echo "::group::Running Devolv ${{ inputs.tool }}"
+
+        if [ -z "${{ inputs.path }}" ]; then
+          echo "::error::❌ Path input is required but was not provided."
+          exit 1
+        fi
+
         if [ "${{ inputs.tool }}" = "drift" ]; then
           if [ ! -f "${{ inputs.path }}" ]; then
-            echo "❌ Error: drift requires a file path. '${{ inputs.path }}' is not a file."
+            echo "::error::❌ Drift requires a file path. '${{ inputs.path }}' is not a file."
             exit 1
           fi
           devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}"
+        
         elif [ "${{ inputs.tool }}" = "validate" ]; then
           devolv validate "${{ inputs.path }}"
+
         else
-          echo "❌ Unknown tool: ${{ inputs.tool }}"
+          echo "::error::❌ Unknown tool: ${{ inputs.tool }}"
           exit 1
         fi
+
+        echo "::endgroup::"
       shell: bash
