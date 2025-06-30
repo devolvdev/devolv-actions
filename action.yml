@@ -1,0 +1,33 @@
+name: Devolv Action
+description: Run Devolv DevOps Toolkit tools (drift, validate) in GitHub Actions
+
+inputs:
+  tool:
+    description: Which Devolv tool to run (e.g. drift, validate)
+    required: true
+  policy-name:
+    description: IAM policy name (required for drift)
+    required: false
+  file:
+    description: Path to the local policy file
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install Devolv
+      run: |
+        pip install .[dev]
+      shell: bash
+
+    - name: Run Devolv tool
+      run: |
+        if [ "${{ inputs.tool }}" = "drift" ]; then
+          devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.file }}"
+        elif [ "${{ inputs.tool }}" = "validate" ]; then
+          devolv validate file "${{ inputs.file }}"
+        else
+          echo "Unknown tool: ${{ inputs.tool }}"
+          exit 1
+        fi
+      shell: bash
