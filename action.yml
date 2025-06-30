@@ -43,7 +43,6 @@ runs:
         elif [ "${{ inputs.tool }}" = "validate" ]; then
           devolv validate "${{ inputs.path }}" || true
 
-          # Capture exit code ourselves if needed (fail-on-high-risk)
           if [ "${{ inputs.fail-on-high-risk }}" = "true" ]; then
             if devolv validate "${{ inputs.path }}" --json | grep -q '"level": "high"'; then
               echo "::error::❌ High-risk findings detected"
