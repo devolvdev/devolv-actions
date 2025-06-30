@@ -41,7 +41,6 @@ runs:
           devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}"
 
         elif [ "${{ inputs.tool }}" = "validate" ]; then
-          echo "::group::Running validation on '${{ inputs.path }}'"
           devolv validate "${{ inputs.path }}" --json > findings.json || true
 
           if grep -q '"level": "high"' findings.json; then
@@ -55,7 +54,6 @@ runs:
           else
             echo "✅ No high-risk findings"
           fi
-          echo "::endgroup::"
 
         else
           echo "::error::❌ Unknown tool: ${{ inputs.tool }}"
@@ -67,7 +65,7 @@ runs:
 
     - name: Upload findings (if any)
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: devolv-findings
         path: findings.json
