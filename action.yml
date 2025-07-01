@@ -56,3 +56,6 @@ runs:
           exit 1
         fi
       shell: bash
+branding:
+  icon: 'shield'
+  color: 'blue'
