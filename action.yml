@@ -22,9 +22,9 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install Devolv
+    - name: Install Devolv from PyPI
       run: |
-        pip install .[dev] --quiet --disable-pip-version-check > /dev/null 2>&1
+        pip install devolv==0.2.6 --disable-pip-version-check
       shell: bash
 
     - name: Export GitHub token
