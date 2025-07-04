@@ -27,14 +27,11 @@ runs:
         pip install devolv==0.2.7 --disable-pip-version-check
       shell: bash
 
-    - name: Export GitHub token
+    - name: Run Devolv tool
       run: |
         export GITHUB_TOKEN="${{ inputs.github-token }}"
         echo "✅ GITHUB_TOKEN set for Devolv tool"
-      shell: bash
 
-    - name: Run Devolv tool
-      run: |
         if [ -z "${{ inputs.path }}" ]; then
           echo "::error::❌ Path input is required but was not provided."
           exit 1
@@ -46,17 +43,22 @@ runs:
             exit 1
           fi
 
-          devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}"
+          if devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}"; then
+            echo "✅ No drift detected. Policies match."
+          else
+            echo "::error::❌ Drift detected. Policies do not match."
+            exit 1
+          fi
 
         elif [ "${{ inputs.tool }}" = "validate" ]; then
           echo "::group::Running Devolv validate"
-          devolv validate "${{ inputs.path }}"
-
-          if [ "${{ inputs.fail-on-high-risk }}" = "true" ]; then
-            if devolv validate "${{ inputs.path }}" --json | grep -q '"level": "high"'; then
-              echo "::error::❌ High-risk findings detected"
-              exit 1
-            fi
+          if devolv validate "${{ inputs.path }}" --json | tee validate.json | grep -q '"level": "high"'; then
+            cat validate.json
+            echo "::error::❌ High-risk findings detected"
+            exit 1
+          else
+            cat validate.json
+            echo "✅ No high-risk findings."
           fi
           echo "::endgroup::"
 
