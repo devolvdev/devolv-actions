@@ -1,5 +1,5 @@
 name: Devolv Action
-description: Run Devolv DevOps Toolkit tools (drift, validate) in GitHub Actions
+description: Run Devolv DevOps Toolkit tools (drift v2, validate) in GitHub Actions
 
 inputs:
   tool:
@@ -10,6 +10,9 @@ inputs:
     required: false
   path:
     description: Path to the local policy file or directory
+    required: true
+  github-token:
+    description: GitHub token to use for API calls
     required: true
   fail-on-high-risk:
     description: Whether to fail the job if high-risk findings are detected (for validate)
@@ -24,6 +27,12 @@ runs:
         pip install .[dev] --quiet --disable-pip-version-check > /dev/null 2>&1
       shell: bash
 
+    - name: Export GitHub token
+      run: |
+        export GITHUB_TOKEN="${{ inputs.github-token }}"
+        echo "✅ GITHUB_TOKEN set for Devolv tool"
+      shell: bash
+
     - name: Run Devolv tool
       run: |
         if [ -z "${{ inputs.path }}" ]; then
@@ -36,6 +45,7 @@ runs:
             echo "::error::❌ Drift requires a file path. '${{ inputs.path }}' is not a file."
             exit 1
           fi
+
           devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}"
 
         elif [ "${{ inputs.tool }}" = "validate" ]; then
@@ -43,7 +53,6 @@ runs:
           devolv validate "${{ inputs.path }}"
 
           if [ "${{ inputs.fail-on-high-risk }}" = "true" ]; then
-            # Check for high-risk findings and fail if present
             if devolv validate "${{ inputs.path }}" --json | grep -q '"level": "high"'; then
               echo "::error::❌ High-risk findings detected"
               exit 1
@@ -56,6 +65,7 @@ runs:
           exit 1
         fi
       shell: bash
+
 branding:
   icon: 'shield'
   color: 'blue'
