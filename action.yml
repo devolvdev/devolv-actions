@@ -24,7 +24,7 @@ runs:
   steps:
     - name: Install Devolv
       run: |
-        pip install devolv==0.2.13 --disable-pip-version-check
+        pip install devolv==0.2.14 --disable-pip-version-check
       shell: bash
 
     - name: Run Devolv tool
