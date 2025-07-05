@@ -3,7 +3,7 @@ description: Run Devolv DevOps Toolkit tools (drift v2, validate) in GitHub Acti
 
 inputs:
   tool:
-    description: Which Devolv tool to run (e.g. drift, validate)
+    description: Which Devolv tool to run (drift, validate)
     required: true
   policy-name:
     description: IAM policy name (required for drift)
@@ -22,45 +22,44 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install Devolv from PyPI
+    - name: Install Devolv
       run: |
-        pip install devolv==0.2.11 --disable-pip-version-check
+        pip install devolv==0.2.12 --disable-pip-version-check
       shell: bash
 
     - name: Run Devolv tool
       run: |
         export GITHUB_TOKEN="${{ inputs.github-token }}"
-        echo "✅ GITHUB_TOKEN set for Devolv tool"
+        echo "✅ GITHUB_TOKEN set"
 
         if [ -z "${{ inputs.path }}" ]; then
-          echo "::error::❌ Path input is required but was not provided."
+          echo "::error::❌ Path is required"
           exit 1
         fi
 
         if [ "${{ inputs.tool }}" = "drift" ]; then
           if [ ! -f "${{ inputs.path }}" ]; then
-            echo "::error::❌ Drift requires a file path. '${{ inputs.path }}' is not a file."
+            echo "::error::❌ Drift requires a file path"
             exit 1
           fi
 
+          # Run drift - we let Devolv handle the aws<->local logic
           if devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}"; then
-            echo "✅ No drift detected. Policies match."
+            echo "✅ No drift detected"
           else
-            echo "::error::❌ Drift detected. Policies do not match."
+            echo "::error::❌ Drift detected"
             exit 1
           fi
 
         elif [ "${{ inputs.tool }}" = "validate" ]; then
-          echo "::group::Running Devolv validate"
           if devolv validate "${{ inputs.path }}" --json | tee validate.json | grep -q '"level": "high"'; then
             cat validate.json
             echo "::error::❌ High-risk findings detected"
             exit 1
           else
             cat validate.json
-            echo "✅ No high-risk findings."
+            echo "✅ No high-risk findings"
           fi
-          echo "::endgroup::"
 
         else
           echo "::error::❌ Unknown tool: ${{ inputs.tool }}"
