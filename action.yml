@@ -27,11 +27,13 @@ runs:
   steps:
     - name: Install Devolv silently
       run: |
-        python -m pip install --quiet --disable-pip-version-check devolv==0.2.21
+        python -m pip install --quiet --disable-pip-version-check devolv==0.2.22
       shell: bash
 
     - name: Run Devolv tool
       run: |
+        set -e
+
         export GITHUB_TOKEN="${{ inputs.github-token }}"
 
         if [ -z "${{ inputs.path }}" ]; then
@@ -39,34 +41,39 @@ runs:
           exit 1
         fi
 
-        if [ "${{ inputs.tool }}" = "drift" ]; then
-          if [ ! -f "${{ inputs.path }}" ]; then
-            echo "::error::❌ Drift requires a file path. '${{ inputs.path }}' is not a file."
+        case "${{ inputs.tool }}" in
+          drift)
+            if [ ! -f "${{ inputs.path }}" ]; then
+              echo "::error::❌ Drift requires a file path. '${{ inputs.path }}' is not a file."
+              exit 1
+            fi
+
+            ARGS="--policy-name \"${{ inputs.policy-name }}\" --file \"${{ inputs.path }}\""
+            if [ -n "${{ inputs.approvers }}" ]; then
+              ARGS="$ARGS --approvers \"${{ inputs.approvers }}\""
+            fi
+
+            eval devolv drift $ARGS
+            ;;
+          
+          validate)
+            echo "::group::Running Devolv validate"
+            if devolv validate "${{ inputs.path }}" --json | tee validate.json | grep -q '"level": "high"'; then
+              cat validate.json
+              echo "::error::❌ High-risk findings detected"
+              exit 1
+            else
+              cat validate.json
+              echo "✅ No high-risk findings."
+            fi
+            echo "::endgroup::"
+            ;;
+          
+          *)
+            echo "::error::❌ Unknown tool: '${{ inputs.tool }}'"
             exit 1
-          fi
-
-          if [ -z "${{ inputs.approvers }}" ]; then
-            devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}"
-          else
-            devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}" --approvers "${{ inputs.approvers }}"
-          fi
-
-        elif [ "${{ inputs.tool }}" = "validate" ]; then
-          echo "::group::Running Devolv validate"
-          if devolv validate "${{ inputs.path }}" --json | tee validate.json | grep -q '"level": "high"'; then
-            cat validate.json
-            echo "::error::❌ High-risk findings detected"
-            exit 1
-          else
-            cat validate.json
-            echo "✅ No high-risk findings."
-          fi
-          echo "::endgroup::"
-
-        else
-          echo "::error::❌ Unknown tool: ${{ inputs.tool }}"
-          exit 1
-        fi
+            ;;
+        esac
       shell: bash
 
 branding:
