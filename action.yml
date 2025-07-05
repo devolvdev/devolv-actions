@@ -1,9 +1,9 @@
 name: Devolv Action
-description: Run Devolv DevOps Toolkit tools (drift v2, validate) in GitHub Actions
+description: Run Devolv DevOps Toolkit tools (drift, validate) in GitHub Actions
 
 inputs:
   tool:
-    description: Which Devolv tool to run (drift, validate)
+    description: Which Devolv tool to run (e.g. drift, validate)
     required: true
   policy-name:
     description: IAM policy name (required for drift)
@@ -18,48 +18,52 @@ inputs:
     description: Whether to fail the job if high-risk findings are detected (for validate)
     required: false
     default: "true"
+  approvers:
+    description: Comma-separated GitHub usernames for approval issue (optional)
+    required: false
 
 runs:
   using: "composite"
   steps:
-    - name: Install Devolv
+    - name: Install Devolv from PyPI
       run: |
-        pip install devolv==0.2.15 --disable-pip-version-check
+        pip install devolv==0.2.11 --disable-pip-version-check
       shell: bash
 
     - name: Run Devolv tool
       run: |
         export GITHUB_TOKEN="${{ inputs.github-token }}"
-        echo "✅ GITHUB_TOKEN set"
+        echo "✅ GITHUB_TOKEN set for Devolv tool"
 
         if [ -z "${{ inputs.path }}" ]; then
-          echo "::error::❌ Path is required"
+          echo "::error::❌ Path input is required but was not provided."
           exit 1
         fi
 
         if [ "${{ inputs.tool }}" = "drift" ]; then
           if [ ! -f "${{ inputs.path }}" ]; then
-            echo "::error::❌ Drift requires a file path"
+            echo "::error::❌ Drift requires a file path. '${{ inputs.path }}' is not a file."
             exit 1
           fi
 
-          # Run drift - we let Devolv handle the aws<->local logic
-          if devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}"; then
-            echo "✅ No drift detected"
+          # Run drift with optional approvers if provided
+          if [ -z "${{ inputs.approvers }}" ]; then
+            devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}"
           else
-            echo "::error::❌ Drift detected"
-            exit 1
+            devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}" --approvers "${{ inputs.approvers }}"
           fi
 
         elif [ "${{ inputs.tool }}" = "validate" ]; then
+          echo "::group::Running Devolv validate"
           if devolv validate "${{ inputs.path }}" --json | tee validate.json | grep -q '"level": "high"'; then
             cat validate.json
             echo "::error::❌ High-risk findings detected"
             exit 1
           else
             cat validate.json
-            echo "✅ No high-risk findings"
+            echo "✅ No high-risk findings."
           fi
+          echo "::endgroup::"
 
         else
           echo "::error::❌ Unknown tool: ${{ inputs.tool }}"
