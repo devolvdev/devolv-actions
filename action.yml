@@ -25,15 +25,14 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Install Devolv from PyPI
+    - name: Install Devolv silently
       run: |
-        pip install devolv==0.2.17 --disable-pip-version-check
+        python -m pip install --quiet --disable-pip-version-check devolv==0.2.17
       shell: bash
 
     - name: Run Devolv tool
       run: |
         export GITHUB_TOKEN="${{ inputs.github-token }}"
-        echo "✅ GITHUB_TOKEN set for Devolv tool"
 
         if [ -z "${{ inputs.path }}" ]; then
           echo "::error::❌ Path input is required but was not provided."
@@ -46,7 +45,6 @@ runs:
             exit 1
           fi
 
-          # Run drift with optional approvers if provided
           if [ -z "${{ inputs.approvers }}" ]; then
             devolv drift --policy-name "${{ inputs.policy-name }}" --file "${{ inputs.path }}"
           else
