@@ -21,13 +21,17 @@ inputs:
   approvers:
     description: Comma-separated GitHub usernames for approval issue (optional)
     required: false
+  approval-anyway:
+    description: Force approval even if no drift detected
+    required: false
+    default: "false"
 
 runs:
   using: "composite"
   steps:
     - name: Install Devolv silently
       run: |
-        python -m pip install --quiet --disable-pip-version-check devolv==0.2.22
+        python -m pip install --quiet --disable-pip-version-check devolv==0.2.23
       shell: bash
 
     - name: Run Devolv tool
@@ -51,6 +55,9 @@ runs:
             ARGS="--policy-name \"${{ inputs.policy-name }}\" --file \"${{ inputs.path }}\""
             if [ -n "${{ inputs.approvers }}" ]; then
               ARGS="$ARGS --approvers \"${{ inputs.approvers }}\""
+            fi
+            if [ "${{ inputs.approval-anyway }}" = "true" ]; then
+              ARGS="$ARGS --approval-anyway"
             fi
 
             eval devolv drift $ARGS
