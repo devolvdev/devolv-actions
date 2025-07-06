@@ -31,7 +31,7 @@ runs:
   steps:
     - name: Install Devolv silently
       run: |
-        python -m pip install --quiet --disable-pip-version-check devolv==0.2.38
+        python -m pip install --quiet --disable-pip-version-check devolv==0.2.39
       shell: bash
 
     - name: Run Devolv tool
