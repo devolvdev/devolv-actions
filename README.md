@@ -74,7 +74,7 @@
 
 ## 🔗 Further resources
 
-➡ [Devolv Drift Onboarding + CI/CD Guide](https://devolvdev.github.io/devolv/drift.html)  
+➡ [Devolv Drift Onboarding + CI/CD Guide](https://extraordinary-cobbler-1d9612.netlify.app/)  
 ➡ [Devolv Validate Docs](https://devolvdev.github.io/devolv/validator.html)  
 ➡ [Devolv Project on GitHub](https://github.com/devolvdev)
 
